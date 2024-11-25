@@ -3,8 +3,9 @@ const mongoose = require("mongoose");
 
 // GET /tours
 const getAllTours = async (req, res) => {
+  const user_id = req.user._id;
+
   try {
-    const user_id = req.user._id;
     const tours = await Tour.find({ user_id }).sort({ createdAt: -1 });
     res.status(200).json(tours);
   } catch (error) {
@@ -14,11 +15,23 @@ const getAllTours = async (req, res) => {
 
 // POST /tours
 const createTour = async (req, res) => {
+  const { name, info, image, price } = req.body;
+  const user_id = req.user._id;
+
   try {
-    const newTour = await Tour.create({ ...req.body });
+    const newTour = new Tour({
+      name: name,
+      info: info,
+      image: image,
+      price: price,
+      user_id,
+    });
+
+    await newTour.save();
     res.status(201).json(newTour);
   } catch (error) {
-    res.status(400).json({ message: "Failed to create tour", error: error.message });
+    console.error(error);
+    res.status(500).json({ error: "Server Error" });
   }
 };
 
@@ -75,14 +88,18 @@ const deleteTour = async (req, res) => {
   }
 
   try {
-    const deletedTour = await Tour.findOneAndDelete({ _id: tourId });
-    if (deletedTour) {
-      res.status(204).send(); // 204 No Content
-    } else {
-      res.status(404).json({ message: "Tour not found" });
+    const user_id = req.user._id;
+    const tour = await Tour.findByIdAndDelete({
+      _id: tourId,
+      user_id: user_id,
+    });
+    if (!tour) {
+      return res.status(404).json({ message: "Tour not found" });
     }
+    res.status(204).send(); // 204 No Content
   } catch (error) {
-    res.status(500).json({ message: "Failed to delete tour" });
+    console.error(error);
+    res.status(500).json({ error: "Server Error" });
   }
 };
 

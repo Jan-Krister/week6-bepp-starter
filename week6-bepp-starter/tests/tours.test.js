@@ -34,6 +34,7 @@ beforeAll(async () => {
     membership_status: "Inactive",
   });
   token = result.body.token;
+  console.log("Token: ", token);
 });
 
 describe("Given there are initially some tours saved", () => {
